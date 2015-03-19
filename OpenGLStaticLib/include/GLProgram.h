@@ -21,8 +21,7 @@ public:
     virtual ~GLProgram();
     void link();
     void use();
-    void setProgramID(GLuint);
-    GLuint getProgramID();
+    GLuint getProgramID() const;
     void setShaders(std::vector<GLuint>);
     void setShaders(GLuint[]);
     //void setShaders(std::vector<GLShader>);

@@ -38,12 +38,7 @@ GLProgram::~GLProgram()
     //glDeleteProgram(program_id);
 }
 
-void GLProgram::setProgramID(GLuint pid)
-{
-    program_id = pid;
-}
-
-GLuint GLProgram::getProgramID()
+GLuint GLProgram::getProgramID() const
 {
     return program_id;
 }
