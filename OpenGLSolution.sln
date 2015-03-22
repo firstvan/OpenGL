@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenGLStaticLib", "OpenGLSt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FifthLesson", "FifthLesson\FifthLesson.vcxproj", "{E25D0DBA-AE91-4122-8F86-A5FB4EDE8FC9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Fog", "Fog\Fog.vcxproj", "{DEAB7894-1C61-4CF9-A095-18D8BCE66454}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -54,6 +56,17 @@ Global
 		{E25D0DBA-AE91-4122-8F86-A5FB4EDE8FC9}.Release|Win32.Build.0 = Release|Win32
 		{E25D0DBA-AE91-4122-8F86-A5FB4EDE8FC9}.Release|x64.ActiveCfg = Release|x64
 		{E25D0DBA-AE91-4122-8F86-A5FB4EDE8FC9}.Release|x64.Build.0 = Release|x64
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Debug|Win32.Build.0 = Debug|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Debug|x64.ActiveCfg = Debug|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Release|Win32.ActiveCfg = Release|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Release|Win32.Build.0 = Release|Win32
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Release|x64.ActiveCfg = Release|x64
+		{DEAB7894-1C61-4CF9-A095-18D8BCE66454}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
