@@ -14,16 +14,16 @@ using glm::vec3;
 using glm::vec4;
 using glm::mat4;
 
-int WIN_WIDTH = 1280;
-int WIN_HEIGHT = 720;
+int WIN_WIDTH = 1920;
+int WIN_HEIGHT = 1080;
 
 GLFWwindow * window;
 GLProgram envProgram;
 
 Cube * enviroment;
 
-vec3 camPos = vec3(0.0f, 12.5f, 12.5f);
-vec3 camTarget = vec3(0.0, 0.0, 0.0);
+vec3 camPos = vec3(0.0f, 12.5f, 5.0f);
+vec3 camTarget = vec3(0.0, 0.0, 10.0);
 vec3 camUp = vec3(0.0, 0.0, 1.0);
 
 mat4 model;
@@ -31,6 +31,8 @@ mat4 view;
 mat4 projection;
 
 vec4 light = vec4(0.0f, 0.0f, 5.0f, 1.0f);
+
+GLfloat moveStep = 0.1f;
 
 void loadEnviromentTexture()
 {
@@ -86,7 +88,7 @@ void init()
     glClearColor(0.0, 0.0, 0.0, 1.0);
 
 
-    enviroment = new Cube(true, 50.0f);
+    enviroment = new Cube(true, 100.0f);
 
     GLShader envVertexShader(GLShader::GLShaderType::VERTEX);
     envVertexShader.readShader("enviroment.vert");
@@ -149,14 +151,54 @@ void mainLoop()
 
 void keyFunction(GLFWwindow *window, int key, int scanCode, int action, int mods)
 {
+    vec3 direction = camTarget - camPos;
+    switch (key)
+    {
+    case GLFW_KEY_UP:
+        camTarget.z += moveStep;
+        break;
+    case GLFW_KEY_DOWN:
+        camTarget.z -= moveStep;
+        break;
+    case GLFW_KEY_LEFT:
+        camTarget.x += moveStep;
+        break;
+    case GLFW_KEY_RIGHT:
+        camTarget.x -= moveStep;
+        break;
+    case GLFW_KEY_W:
+        camPos += direction * moveStep;
+        camTarget += direction * moveStep;
+        break;
+    case GLFW_KEY_S:
+        camPos -= direction * moveStep;
+        camTarget -= direction * moveStep;
+        break;
+    case GLFW_KEY_A:
+        camPos -= glm::cross(direction, camUp) * moveStep;
+        camTarget -= glm::cross(direction, camUp) * moveStep;
+        break;
+    case GLFW_KEY_D:
+        camPos += glm::cross(direction, camUp) * moveStep;
+        camTarget += glm::cross(direction, camUp) * moveStep;
+        break;
+    default:
+        printf("Bad key :(\n");
+        break;
+    }
 
+    view = glm::lookAt(camPos, camTarget, camUp);
+
+    glfwPollEvents();
 }
 
 int main()
 {
-    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT);
+    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT, true);
 
     init();
+
+    glfwSetKeyCallback(window, keyFunction);
 
     mainLoop();
 
