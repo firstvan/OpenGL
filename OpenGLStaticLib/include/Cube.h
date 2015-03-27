@@ -9,7 +9,7 @@ private:
     unsigned int vaoHandle;
 
 public:
-    Cube(bool);
+    Cube(bool, float);
 
 
     void render();

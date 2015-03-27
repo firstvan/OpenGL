@@ -13,8 +13,8 @@
 #include <stack>
 #include <time.h>
 
-#define WIN_WIDTH 1280
-#define WIN_HEIGHT 720
+#define WIN_WIDTH 1600
+#define WIN_HEIGHT 900
 
 GLFWwindow * window;
 
@@ -55,7 +55,15 @@ void setMatrices()
 
     prog.setUniform("MVP", projection * mv);
 }
-
+void update()
+{
+    for (size_t i = 0; i < 10; i++)
+    {
+        mert1[i] = (rand() % 10 - 5);
+        mert2[i] = (rand() % 10 - 5);
+        mert3[i] = (rand() % 10 - 5);
+    }
+}
 void init()
 {
     glEnable(GL_DEPTH_TEST);
@@ -98,16 +106,12 @@ void init()
     prog.setUniform("Light[4].Position", view * worldLight);
     prog.setUniform("Light[4].Intensity", 0.0f, 0.0f, 0.0f);
 
-    for (size_t i = 0; i < 10; i++)
-    {
-        mert1[i] = (rand() % 10 - 5);
-        mert2[i] = (rand() % 10 - 5);
-        mert3[i] = (rand() % 10 - 5);
-    }
-
+    update();
 
 
 }
+
+
 
 void mainLoop()
 {
@@ -185,6 +189,9 @@ void keyFunction(GLFWwindow *window, int key, int scanCode, int action, int mods
     case GLFW_KEY_W:
         view = glm::translate(view, glm::vec3(0.0, -0.1, 0.0));
         //move camera
+        break;
+    case GLFW_KEY_R:
+        update();
         break;
     default:
         printf("Bad key :(\n");

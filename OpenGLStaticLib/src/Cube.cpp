@@ -4,9 +4,9 @@
 #include <algorithm>
 
 
-Cube::Cube(bool reverse)
+Cube::Cube(bool reverse, float size)
 {
-    float side = 1.0f;
+    float side = size;
     float side2 = side / 2.0f;
 
     float v[24 * 3] =
