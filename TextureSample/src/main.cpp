@@ -4,46 +4,56 @@
 #include "GLShader.h"
 #include "GLProgram.h"
 #include "TextureReader.h"
+#include "Sphere.h"
+#include "Camera.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <iostream>
+
+#include "soil.h"
 
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
 
-int WIN_WIDTH = 1920;
-int WIN_HEIGHT = 1080;
+int WIN_WIDTH = 1280;
+int WIN_HEIGHT = 720;
 
 GLFWwindow * window;
 GLProgram envProgram;
+GLProgram sphereProgram;
 
 Cube * enviroment;
+Sphere * sphere;
 
-vec3 camPos = vec3(0.0f, 12.5f, 5.0f);
-vec3 camTarget = vec3(0.0, 0.0, 10.0);
-vec3 camUp = vec3(0.0, 0.0, 1.0);
+GLfloat ter = 100.0f;
+/*vec3 camPos = vec3(0.0f, 25.0f, 5.0f);
+vec3 camTarget = vec3(0.0, 0.0, 0.0);
+vec3 camUp = vec3(0.0, 0.0, 1.0);*/
+Camera camera(vec3(0.0f, 5.0f, 0.0f), ter);
 
 mat4 model;
-mat4 view;
 mat4 projection;
 
-vec4 light = vec4(0.0f, 0.0f, 5.0f, 1.0f);
+vec4 light = vec4(-camera.getPosition(), 1.0f);
 
 GLfloat moveStep = 0.1f;
+
+
+TextureReader textureReader;
 
 void loadEnviromentTexture()
 {
     glActiveTexture(GL_TEXTURE0);
 
-    GLuint textId;
+    GLuint texId;
+    glGenTextures(1, &texId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texId);
 
-    glGenTextures(1, &textId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textId);
-
-    const char * names[] = { "wall", "wall", "wall", "wall", "up", "floor" };
+    const char * names[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
 
     GLuint targets[] =
     {
@@ -55,9 +65,9 @@ void loadEnviromentTexture()
         GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
     };
 
-    GLint w, h;
-    glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, 512, 512);
-    TextureReader textureReader;
+    int w, h, ch;
+    glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, 2048, 2048);
+
     for (int i = 0; i < 6; i++)
     {
         std::string texName = names[i] + std::string(".tga");
@@ -82,13 +92,21 @@ void loadEnviromentTexture()
 
 }
 
+void loadSphereTexture()
+{
+    GLint w, h;
+    glActiveTexture(GL_TEXTURE0);
+    textureReader.loadTex("sphereTexture.tga",w,h);
+}
+
 void init()
 {
+    //glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
     glClearColor(0.0, 0.0, 0.0, 1.0);
 
 
-    enviroment = new Cube(true, 100.0f);
+    enviroment = new Cube(true, ter * 2);
 
     GLShader envVertexShader(GLShader::GLShaderType::VERTEX);
     envVertexShader.readShader("enviroment.vert");
@@ -101,35 +119,49 @@ void init()
     envProgram.setShaders({ envVertexShader.getId(), envFragmentShader.getId() });
     envProgram.link();
 
-    model = mat4(1.0f);
-
-    view = glm::lookAt(camPos, camTarget, camUp);
-
     projection = mat4(1.0f);
-    projection = glm::perspective(glm::radians(70.0f), (float)WIN_WIDTH / WIN_HEIGHT, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)WIN_WIDTH / WIN_HEIGHT, 0.05f, 500.0f);
 
     envProgram.use();
-    envProgram.setUniform("light.Position", view * light);
-    envProgram.setUniform("light.Intensity", 0.8f, 0.5f, 0.5f);
-
-
-    envProgram.setUniform("material.Kd", 0.2f, 0.8f, 0.3f);
-    envProgram.setUniform("material.Ka", 0.2f, 0.6f, 0.3f);
-    envProgram.setUniform("material.Ks", 0.2f, 0.2f, 0.8f);
-    envProgram.setUniform("material.Shininess", 100.0f);
-
-    /*TextureReader textreader;
-    GLint w, h;
-    glActiveTexture(GL_TEXTURE0);
-    textreader.loadTex("wall.tga", w, h);*/
 
     loadEnviromentTexture();
+
+    sphere = new Sphere(1.0f, 180, 180);
+
+    GLShader sphereVertexShader(GLShader::GLShaderType::VERTEX);
+    sphereVertexShader.readShader("sphere.vert");
+    sphereVertexShader.compileShader();
+
+    GLShader sphereFragmentShader(GLShader::GLShaderType::FRAGMENT);
+    sphereFragmentShader.readShader("sphere.frag");
+    sphereFragmentShader.compileShader();
+
+    sphereProgram.setShaders({ sphereVertexShader.getId(), sphereFragmentShader.getId() });
+    sphereProgram.link();
+
+    sphereProgram.use();
+
+    model = mat4(1.0f);
+
+    model *= glm::translate(vec3(0.0, 0.0, -50.0));
+
+    sphereProgram.setUniform("light.Position", camera.getView() * light);
+    sphereProgram.setUniform("light.Intensity", 0.8f, 0.5f, 0.5f);
+
+
+    sphereProgram.setUniform("material.Kd", 0.2f, 0.8f, 0.3f);
+    sphereProgram.setUniform("material.Ka", 0.2f, 0.6f, 0.3f);
+    sphereProgram.setUniform("material.Ks", 0.2f, 0.2f, 0.8f);
+    sphereProgram.setUniform("material.Shininess", 100.0f);
+
+    loadSphereTexture();
+
 }
 
 void setMatrices()
 {
 
-    mat4 mv = view * model;
+    mat4 mv = camera.getView() * mat4(1.0f);
     envProgram.setUniform("ModelViewMatrix", mv);
     envProgram.setUniform("NormalMatrix",
                           glm::mat3(glm::vec3(mv[0]), glm::vec3(mv[1]), glm::vec3(mv[2])));
@@ -141,8 +173,21 @@ void mainLoop()
 {
     while (!glfwWindowShouldClose(window) && !glfwGetKey(window, GLFW_KEY_ESCAPE))
     {
+        //glClear(GL_DEPTH_BUFFER_BIT);
+        envProgram.use();
         setMatrices();
         enviroment->render();
+
+
+        sphereProgram.use();
+        mat4 mv = camera.getView() * model;
+        sphereProgram.setUniform("ModelViewMatrix", mv);
+        sphereProgram.setUniform("NormalMatrix",
+                                 glm::mat3(glm::vec3(mv[0]), glm::vec3(mv[1]), glm::vec3(mv[2])));
+
+        sphereProgram.setUniform("MVP", projection * mv);
+        sphere->render();
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -151,50 +196,46 @@ void mainLoop()
 
 void keyFunction(GLFWwindow *window, int key, int scanCode, int action, int mods)
 {
-    vec3 direction = camTarget - camPos;
+
     switch (key)
     {
     case GLFW_KEY_UP:
-        camTarget.z += moveStep;
+        camera.rotate(0.0f, -1.0f);
         break;
     case GLFW_KEY_DOWN:
-        camTarget.z -= moveStep;
+        camera.rotate(0.0f, 1.0f);
         break;
     case GLFW_KEY_LEFT:
-        camTarget.x += moveStep;
+        camera.rotate(1.0f, 0.0f);
         break;
     case GLFW_KEY_RIGHT:
-        camTarget.x -= moveStep;
+        camera.rotate(-1.0f, 0.0f);
         break;
     case GLFW_KEY_W:
-        camPos += direction * moveStep;
-        camTarget += direction * moveStep;
+        camera.moving(Camera::Dir::W);
         break;
     case GLFW_KEY_S:
-        camPos -= direction * moveStep;
-        camTarget -= direction * moveStep;
+        camera.moving(Camera::Dir::S);
         break;
     case GLFW_KEY_A:
-        camPos -= glm::cross(direction, camUp) * moveStep;
-        camTarget -= glm::cross(direction, camUp) * moveStep;
+        camera.moving(Camera::Dir::A);
         break;
     case GLFW_KEY_D:
-        camPos += glm::cross(direction, camUp) * moveStep;
-        camTarget += glm::cross(direction, camUp) * moveStep;
+        camera.moving(Camera::Dir::D);
         break;
     default:
         printf("Bad key :(\n");
         break;
     }
 
-    view = glm::lookAt(camPos, camTarget, camUp);
+
 
     glfwPollEvents();
 }
 
 int main()
 {
-    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT, true);
+    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT, false);
 
     init();
 

@@ -10,7 +10,15 @@ using glm::mat4;
 class Camera
 {
 public:
-    Camera();
+    enum class Dir
+    {
+        W,
+        A,
+        S,
+        D
+    };
+
+    Camera(vec3, float);
     ~Camera();
 
     const mat4& getView() const;
@@ -23,11 +31,18 @@ public:
     vec3& getPosition();
     vec3& getTarget();
     vec3& getUP();
+    void rotate(float, float);
+    void moving(Dir);
 
 private:
     vec3 eyePosition;
     vec3 targetPosition;
     vec3 up;
+    vec3 front;
+    vec3 right;
+    float movingSpace;
+    float omega;
+    float fi;
 
     mat4 view;
 
