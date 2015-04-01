@@ -19,8 +19,8 @@ using glm::vec3;
 using glm::vec4;
 using glm::mat4;
 
-int WIN_WIDTH = 1280;
-int WIN_HEIGHT = 720;
+int WIN_WIDTH = 1920;
+int WIN_HEIGHT = 1080;
 bool needInit = true;
 double last_x = 0;
 double last_y =  0;
@@ -46,6 +46,7 @@ TextureReader textureReader;
 GLuint sphereTextureBind;
 
 GLuint keyStates[256];
+std::vector<vec3> normals;
 
 void loadEnviromentTexture()
 {
@@ -216,6 +217,12 @@ void init()
 
     sphereTextureBind = loadSphereTexture();
 
+    normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+    normals.push_back(vec3(1.0f, 0.0f, 0.0f));
+    normals.push_back(vec3(0.0f, 0.0f, -1.0f));
+    normals.push_back(vec3(-1.0f, 0.0f, 0.0f));
+    normals.push_back(vec3(0.0f, -1.0f, 0.0f));
+    normals.push_back(vec3(0.0f, 1.0f, 0.0f));
 }
 
 void setMatrices()
@@ -233,7 +240,7 @@ void moveCamera();
 
 vec3 xPlaneVec(ter, 0.0f, 0.0f);
 vec3 sphereCenter(0.0f, 0.0f, 0.0f);
-vec3 normalOfLeft(-1.0f, 0.0f, 0.0f);
+
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window) && !glfwGetKey(window, GLFW_KEY_ESCAPE))
@@ -249,11 +256,34 @@ void mainLoop()
 
         sphereProgram.use();
 
-        vec3 dist = xPlaneVec - sphereCenter;
-        std::cout << sphereCenter.x << ";\t";
         if (sphereCenter.x > ter - 5.0f)
         {
-            sphere->dir = glm::reflect(sphere->dir, normalOfLeft);
+            sphere->dir = glm::reflect(sphere->dir, normals[3]);
+        }
+
+        if (sphereCenter.x <  -ter + 5.0f)
+        {
+            sphere->dir = glm::reflect(sphere->dir, normals[1]);
+        }
+
+        if (sphereCenter.z > ter - 5.0f)
+        {
+            sphere->dir = glm::reflect(sphere->dir, normals[0]);
+        }
+
+        if (sphereCenter.z <  -ter + 5.0f)
+        {
+            sphere->dir = glm::reflect(sphere->dir, normals[2]);
+        }
+
+        if (sphereCenter.y > ter - 5.0f)
+        {
+            sphere->dir = glm::reflect(sphere->dir, normals[5]);
+        }
+
+        if (sphereCenter.y <  -ter + 5.0f)
+        {
+            sphere->dir = glm::reflect(sphere->dir, normals[4]);
         }
 
         vec3 d = sphere->dir * 0.1f;
@@ -303,6 +333,14 @@ void moveCamera()
     if (keyStates[GLFW_KEY_LEFT_CONTROL])
     {
         camera.moving(Camera::Dir::DOWN);
+    }
+    if (keyStates[GLFW_KEY_LEFT_SHIFT])
+    {
+        camera.setSprint(2.0);
+    }
+    if (!keyStates[GLFW_KEY_LEFT_SHIFT])
+    {
+        camera.setSprint(1.0);
     }
 }
 
@@ -358,7 +396,7 @@ void mouse_callback(GLFWwindow * window, double xpos, double ypos)
 
 int main()
 {
-    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT, false);
+    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT, true);
 
     init();
 

@@ -36,6 +36,8 @@ public:
     void rotate(float, float);
     void moving(Dir);
 
+    void setSprint(float);
+
 private:
     vec3 eyePosition;
     vec3 targetPosition;
@@ -45,6 +47,8 @@ private:
     float movingSpace;
     float omega;
     float fi;
+
+    float sprint = 1.0;
 
     mat4 view;
 

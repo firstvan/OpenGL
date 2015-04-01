@@ -90,7 +90,7 @@ void Camera::moving(Dir dir)
     switch (dir)
     {
     case Dir::W:
-        temp = eyePosition - (front * 0.25f);
+        temp = eyePosition - (front * 0.25f * sprint);
 
         if (std::abs(temp.x) < movingSpace && std::abs(temp.y) < movingSpace && std::abs(temp.z) < movingSpace)
         {
@@ -99,7 +99,7 @@ void Camera::moving(Dir dir)
 
         break;
     case Dir::S:
-        temp = eyePosition + (front * 0.25f);
+        temp = eyePosition + (front * 0.25f * sprint);
 
         if (std::abs(temp.x) < movingSpace && std::abs(temp.y) < movingSpace && std::abs(temp.z) < movingSpace)
         {
@@ -107,7 +107,7 @@ void Camera::moving(Dir dir)
         }
         break;
     case Dir::A:
-        temp = eyePosition + (right * 0.25f);
+        temp = eyePosition + (right * 0.25f * sprint);
 
         if (std::abs(temp.x) < movingSpace && std::abs(temp.y) < movingSpace && std::abs(temp.z) < movingSpace)
         {
@@ -115,7 +115,7 @@ void Camera::moving(Dir dir)
         }
         break;
     case Dir::D:
-        temp = eyePosition - (right * 0.25f);
+        temp = eyePosition - (right * 0.25f * sprint);
 
         if (std::abs(temp.x) < movingSpace && std::abs(temp.y) < movingSpace && std::abs(temp.z) < movingSpace)
         {
@@ -141,4 +141,9 @@ void Camera::moving(Dir dir)
     }
 
     update();
+}
+
+void Camera::setSprint(float s)
+{
+    sprint = s;
 }
