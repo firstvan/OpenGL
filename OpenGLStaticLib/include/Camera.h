@@ -25,6 +25,7 @@ public:
 
     const mat4& getView() const;
     void update();
+    void update2();
 
     void setPosition(const vec3&);
     void setTarget(const vec3&);

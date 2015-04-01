@@ -24,6 +24,11 @@ void Camera::update()
     view = glm::lookAt(eyePosition, eyePosition - front, up);
 }
 
+void Camera::update2()
+{
+    view = glm::lookAt(eyePosition, front, up);
+}
+
 void Camera::setPosition(const vec3& p)
 {
     eyePosition = p;
@@ -31,7 +36,7 @@ void Camera::setPosition(const vec3& p)
 
 void Camera::setTarget(const vec3& p)
 {
-    targetPosition = p;
+    front = p;
 }
 
 void Camera::setUp(const vec3& p)
