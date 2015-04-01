@@ -86,12 +86,12 @@ void init()
 
     prog.use();
 
-    prog.setUniform("Material.Kd", 0.9f, 0.5f, 0.3f);
+    prog.setUniform("Material.Kd", 0.0f, 0.0f, 1.0f);
     prog.setUniform("Light.Ld", 1.0f, 1.0f, 1.0f);
     prog.setUniform("Light.Position", viewLight);
     prog.setUniform("Material.Ka", 0.9f, 0.5f, 0.3f);
     prog.setUniform("Light.La", 0.4f, 0.4f, 0.4f);
-    prog.setUniform("Material.Ks", 0.8f, 0.8f, 0.8f);
+    prog.setUniform("Material.Ks", 0.3f, 0.8f, 0.8f);
     prog.setUniform("Light.Ls", 1.0f, 1.0f, 1.0f);
     prog.setUniform("Material.Shininess", 100.0f);
 }
@@ -136,7 +136,7 @@ void mainLoop()
 
 int main()
 {
-    window = initWindow("Donuts", WIDTH, HEIGHT);
+    window = initWindow("Donuts", WIDTH, HEIGHT, false);
 
     init();
 

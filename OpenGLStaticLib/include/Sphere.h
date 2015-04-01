@@ -1,5 +1,6 @@
 #pragma once
 #include "myGlew.h"
+#include <glm\glm.hpp>
 
 class Sphere
 {
@@ -14,6 +15,6 @@ public:
     Sphere(float, int, int);
 
     void render() const;
-
+    glm::vec3 dir = glm::vec3(1.0f, 0.3f, 0.0f);
     int getVertexArrayHandle();
 };

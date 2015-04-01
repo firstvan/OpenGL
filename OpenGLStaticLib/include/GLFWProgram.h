@@ -14,11 +14,10 @@ GLFWwindow* initWindow(std::string s,int width,int height, bool fullScreen)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 8);
     if (fullScreen)
     {
         window = glfwCreateWindow(width, height, s.c_str(), glfwGetPrimaryMonitor(), nullptr);
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     }
     else
         window = glfwCreateWindow(width, height, s.c_str(), nullptr, nullptr);

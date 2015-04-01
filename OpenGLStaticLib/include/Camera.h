@@ -15,7 +15,9 @@ public:
         W,
         A,
         S,
-        D
+        D,
+        UP,
+        DOWN
     };
 
     Camera(vec3, float);

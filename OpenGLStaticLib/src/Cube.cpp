@@ -42,7 +42,7 @@ Cube::Cube(bool reverse, float size)
         side2, side2, -side2,
         -side2, side2, -side2
     };
-
+    std::copy(v, v + 24 * 3, vertex);
     float n2[24 * 3];
     if (!reverse)
     {
@@ -194,4 +194,9 @@ void Cube::render()
 {
     glBindVertexArray(vaoHandle);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, ((GLubyte *)nullptr + (0)));
+}
+
+glm::vec3 Cube::getVertex(int i)
+{
+    return glm::vec3(vertex[i], vertex[i + 1], vertex[i + 2]);
 }

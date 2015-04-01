@@ -49,7 +49,7 @@ void main()
 	/*vec3 ambdiff, spec;
 	vec4 textColor = texture(Text1, TextCoord);
 	phongModel(Position, Normal, ambdiff, spec);
-	FragColor = vec4(ambdiff,1.0) * textColor + vec4(spec, 1.0);*/
+	FragColor = vec4(adiff,1.0) * textColor + vec4(spec, 1.0);*/
 	
 	vec4 cubeMapColor = texture(CubeMapTex,ReflectDir);
 	FragColor = cubeMapColor;
