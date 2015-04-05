@@ -4,7 +4,7 @@ layout (location = 1) in vec3 VertexNormal;
 layout (location = 2) in vec2 TextureCord;
 out vec3 Position;
 out vec3 Normal;
-out vec3 ReflectDir;
+out vec2 TexCoords;
 
 uniform mat4 MVP;
 uniform mat3 NormalMatrix;
@@ -15,7 +15,7 @@ uniform mat4 ModelViewMatrix;
 void main()
 {
 	
-	ReflectDir = VertexPosition;
+	TexCoords = TextureCord;
 
 	Normal = normalize(NormalMatrix * VertexNormal);
 	Position = vec3(ModelViewMatrix * vec4(VertexPosition, 1.0));

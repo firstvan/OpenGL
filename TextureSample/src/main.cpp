@@ -19,8 +19,8 @@ using glm::vec3;
 using glm::vec4;
 using glm::mat4;
 
-int WIN_WIDTH = 1920;
-int WIN_HEIGHT = 1080;
+int WIN_WIDTH = 800;
+int WIN_HEIGHT = 600;
 bool needInit = true;
 double last_x = 0;
 double last_y =  0;
@@ -28,9 +28,11 @@ double last_y =  0;
 GLFWwindow * window;
 GLProgram envProgram;
 GLProgram sphereProgram;
+GLProgram boxProgram;
 
 Cube * enviroment;
 Sphere * sphere;
+Cube * box;
 
 GLfloat ter = 50.0f;
 Camera camera(vec3(-20.0f, 20.0f, 20.0f), ter);
@@ -43,77 +45,47 @@ vec4 lightPos;
 GLfloat moveStep = 0.1f;
 
 TextureReader textureReader;
-GLuint sphereTextureBind;
 
-GLuint keyStates[256];
+GLuint sphereTextureColorBind;
+GLuint sphereTextureTransBind;
+
+GLuint envTextureBind;
+GLuint boxTextureBind;
+
+
+bool keyStates[1024];
 std::vector<vec3> normals;
 
-void loadEnviromentTexture()
-{
-    glActiveTexture(GL_TEXTURE0);
+mat4 movedBox = mat4(1.0f);
+vec3 boxCenter;
+float boxSize = 5.0f;
 
-    GLuint texId;
-    glGenTextures(1, &texId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texId);
-
-    const char * names[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
-
-    GLuint targets[] =
-    {
-        GL_TEXTURE_CUBE_MAP_POSITIVE_X,
-        GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-        GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-        GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-        GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-        GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-    };
-
-    int w, h;
-    glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, 2048, 2048);
-
-    for (int i = 0; i < 6; i++)
-    {
-        std::string texName = names[i] + std::string(".tga");
-        std::cout << texName << std::endl;
-        unsigned char *data = textureReader.read(texName.c_str(), w, h);
-        glTexSubImage2D(targets[i], 0, 0, 0, w, h,
-                        GL_RGBA, GL_UNSIGNED_BYTE, data);
-        delete[] data;
-    }
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER,
-                    GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S,
-                    GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T,
-                    GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R,
-                    GL_CLAMP_TO_EDGE);
-
-
-}
-
-GLuint loadSphereTexture()
+GLuint loadEnviromentTexture()
 {
     GLint w, h;
     glActiveTexture(GL_TEXTURE0);
-    return textureReader.loadTex("sphereTexture.tga",w,h);
+    return textureReader.loadTex("wall.tga", w, h);
+}
+
+void loadSphereTexture()
+{
+    GLint w, h;
+    glActiveTexture(GL_TEXTURE0);
+    sphereTextureColorBind = textureReader.loadTex("sphereColor.tga",w,h);
+    glActiveTexture(GL_TEXTURE1);
+    sphereTextureTransBind = textureReader.loadTex("sphereTrans.tga", w, h);
 }
 
 void setLights()
 {
     sphereProgram.setUniform("viewPos", camera.getPosition());
-    sphereProgram.setUniform("material.shininess", 0.0f);
+    sphereProgram.setUniform("material.shininess", 100.0f);
+    sphereProgram.setUniform("material.specular", vec3(1.0f, 1.0f, 1.0f));
 
     sphereProgram.setUniform("spotLight[0].position", enviroment->getVertex(20));
-    sphereProgram.setUniform("spotLight[0].direction", vec3(0.0f, -1.0f, 0.0f));
+    sphereProgram.setUniform("spotLight[0].direction", vec3(0.0f, -5.0f, 0.0f));
     sphereProgram.setUniform("spotLight[0].cutOff", glm::cos(glm::radians(10.0f)));
     sphereProgram.setUniform("spotLight[0].outerCutOff", glm::cos(glm::radians(20.0f)));
-    sphereProgram.setUniform("spotLight[0].constant", 1.0f);
-    sphereProgram.setUniform("spotLight[0].linear", 0.09f);
-    sphereProgram.setUniform("spotLight[0].quadratic", 0.032f);
     sphereProgram.setUniform("spotLight[0].ambient", vec3(0.2f));
     sphereProgram.setUniform("spotLight[0].diffuse", vec3(0.8f));
     sphereProgram.setUniform("spotLight[0].specular", vec3(1.0f));
@@ -122,20 +94,14 @@ void setLights()
     sphereProgram.setUniform("spotLight[1].direction", vec3(0.0f, -1.0f, 0.0f));
     sphereProgram.setUniform("spotLight[1].cutOff", glm::cos(glm::radians(10.0f)));
     sphereProgram.setUniform("spotLight[1].outerCutOff", glm::cos(glm::radians(20.0f)));
-    sphereProgram.setUniform("spotLight[1].constant", 1.0f);
-    sphereProgram.setUniform("spotLight[1].linear", 0.09f);
-    sphereProgram.setUniform("spotLight[1].quadratic", 0.032f);
     sphereProgram.setUniform("spotLight[1].ambient", vec3(0.2f));
     sphereProgram.setUniform("spotLight[1].diffuse", vec3(0.8f));
     sphereProgram.setUniform("spotLight[1].specular", vec3(1.0f));
 
     sphereProgram.setUniform("spotLight[2].position", enviroment->getVertex(22));
-    sphereProgram.setUniform("spotLight[2].direction", vec3(0.0f, -1.0f, 0.0f));
+    sphereProgram.setUniform("spotLight[2].direction", vec3(0.0f, -5.0f, 0.0f));
     sphereProgram.setUniform("spotLight[2].cutOff", glm::cos(glm::radians(10.0f)));
     sphereProgram.setUniform("spotLight[2].outerCutOff", glm::cos(glm::radians(20.0f)));
-    sphereProgram.setUniform("spotLight[2].constant", 1.0f);
-    sphereProgram.setUniform("spotLight[2].linear", 0.09f);
-    sphereProgram.setUniform("spotLight[2].quadratic", 0.032f);
     sphereProgram.setUniform("spotLight[2].ambient", vec3(0.2f));
     sphereProgram.setUniform("spotLight[2].diffuse", vec3(0.8f));
     sphereProgram.setUniform("spotLight[2].specular", vec3(1.0f));
@@ -144,33 +110,79 @@ void setLights()
     sphereProgram.setUniform("spotLight[3].direction", vec3(0.0f, -1.0f, 0.0f));
     sphereProgram.setUniform("spotLight[3].cutOff", glm::cos(glm::radians(10.0f)));
     sphereProgram.setUniform("spotLight[3].outerCutOff", glm::cos(glm::radians(20.0f)));
-    sphereProgram.setUniform("spotLight[3].constant", 1.0f);
-    sphereProgram.setUniform("spotLight[3].linear", 0.09f);
-    sphereProgram.setUniform("spotLight[3].quadratic", 0.032f);
     sphereProgram.setUniform("spotLight[3].ambient", vec3(0.2f));
     sphereProgram.setUniform("spotLight[3].diffuse", vec3(0.8f));
     sphereProgram.setUniform("spotLight[3].specular", vec3(1.0f));
 
-
     sphereProgram.setUniform("pointLights[0].position", vec3(-10.0f, ter, -10.0f));
-    sphereProgram.setUniform("pointLights[0].constant", 1.0f);
-    sphereProgram.setUniform("pointLights[0].linear", 0.09f);
-    sphereProgram.setUniform("pointLights[0].quadratic", 0.032f);
     sphereProgram.setUniform("pointLights[0].ambient", vec3(0.2f));
     sphereProgram.setUniform("pointLights[0].diffuse", vec3(0.8f));
     sphereProgram.setUniform("pointLights[0].specular", vec3(1.0f));
 
     sphereProgram.setUniform("pointLights[1].position", vec3(10.0f, ter, 10.0f));
-    sphereProgram.setUniform("pointLights[1].constant", 1.0f);
-    sphereProgram.setUniform("pointLights[1].linear", 0.09f);
-    sphereProgram.setUniform("pointLights[1].quadratic", 0.032f);
     sphereProgram.setUniform("pointLights[1].ambient", vec3(0.2f));
     sphereProgram.setUniform("pointLights[1].diffuse", vec3(0.8f));
     sphereProgram.setUniform("pointLights[1].specular", vec3(1.0f));
 }
 
+void setLights2()
+{
+    boxProgram.setUniform("viewPos", camera.getPosition());
+    boxProgram.setUniform("material.shininess", 100.0f);
+    boxProgram.setUniform("material.specular", vec3(1.0f, 1.0f, 1.0f));
+
+    boxProgram.setUniform("spotLight[0].position", enviroment->getVertex(20));
+    boxProgram.setUniform("spotLight[0].direction", vec3(0.0f, -5.0f, 0.0f));
+    boxProgram.setUniform("spotLight[0].cutOff", glm::cos(glm::radians(10.0f)));
+    boxProgram.setUniform("spotLight[0].outerCutOff", glm::cos(glm::radians(20.0f)));
+    boxProgram.setUniform("spotLight[0].ambient", vec3(0.2f));
+    boxProgram.setUniform("spotLight[0].diffuse", vec3(0.8f));
+    boxProgram.setUniform("spotLight[0].specular", vec3(1.0f));
+
+    boxProgram.setUniform("spotLight[1].position", enviroment->getVertex(21));
+    boxProgram.setUniform("spotLight[1].direction", vec3(0.0f, -1.0f, 0.0f));
+    boxProgram.setUniform("spotLight[1].cutOff", glm::cos(glm::radians(10.0f)));
+    boxProgram.setUniform("spotLight[1].outerCutOff", glm::cos(glm::radians(20.0f)));
+    boxProgram.setUniform("spotLight[1].ambient", vec3(0.2f));
+    boxProgram.setUniform("spotLight[1].diffuse", vec3(0.8f));
+    boxProgram.setUniform("spotLight[1].specular", vec3(1.0f));
+
+    boxProgram.setUniform("spotLight[2].position", enviroment->getVertex(22));
+    boxProgram.setUniform("spotLight[2].direction", vec3(0.0f, -5.0f, 0.0f));
+    boxProgram.setUniform("spotLight[2].cutOff", glm::cos(glm::radians(10.0f)));
+    boxProgram.setUniform("spotLight[2].outerCutOff", glm::cos(glm::radians(20.0f)));
+    boxProgram.setUniform("spotLight[2].ambient", vec3(0.2f));
+    boxProgram.setUniform("spotLight[2].diffuse", vec3(0.8f));
+    boxProgram.setUniform("spotLight[2].specular", vec3(1.0f));
+
+    boxProgram.setUniform("spotLight[3].position", enviroment->getVertex(23));
+    boxProgram.setUniform("spotLight[3].direction", vec3(0.0f, -1.0f, 0.0f));
+    boxProgram.setUniform("spotLight[3].cutOff", glm::cos(glm::radians(10.0f)));
+    boxProgram.setUniform("spotLight[3].outerCutOff", glm::cos(glm::radians(20.0f)));
+    boxProgram.setUniform("spotLight[3].ambient", vec3(0.2f));
+    boxProgram.setUniform("spotLight[3].diffuse", vec3(0.8f));
+    boxProgram.setUniform("spotLight[3].specular", vec3(1.0f));
+
+    boxProgram.setUniform("pointLights[0].position", vec3(-10.0f, ter, -10.0f));
+    boxProgram.setUniform("pointLights[0].ambient", vec3(0.2f));
+    boxProgram.setUniform("pointLights[0].diffuse", vec3(0.8f));
+    boxProgram.setUniform("pointLights[0].specular", vec3(1.0f));
+
+    boxProgram.setUniform("pointLights[1].position", vec3(10.0f, ter, 10.0f));
+    boxProgram.setUniform("pointLights[1].ambient", vec3(0.2f));
+    boxProgram.setUniform("pointLights[1].diffuse", vec3(0.8f));
+    boxProgram.setUniform("pointLights[1].specular", vec3(1.0f));
+}
+
+
+
 void init()
 {
+    for (int i = 0; i < 1024; i++)
+    {
+        keyStates[i] = false;
+    }
+
     glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -194,9 +206,10 @@ void init()
 
     envProgram.use();
 
-    loadEnviromentTexture();
+    envTextureBind = loadEnviromentTexture();
 
     sphere = new Sphere(5.0f, 180, 180);
+    sphere->dir = vec3(1.0f, 0.0f, 0.0f);
 
     GLShader sphereVertexShader(GLShader::GLShaderType::VERTEX);
     sphereVertexShader.readShader("sphere.vert");
@@ -215,7 +228,7 @@ void init()
 
     setLights();
 
-    sphereTextureBind = loadSphereTexture();
+    loadSphereTexture();
 
     normals.push_back(vec3(0.0f, 0.0f, 1.0f));
     normals.push_back(vec3(1.0f, 0.0f, 0.0f));
@@ -223,6 +236,29 @@ void init()
     normals.push_back(vec3(-1.0f, 0.0f, 0.0f));
     normals.push_back(vec3(0.0f, -1.0f, 0.0f));
     normals.push_back(vec3(0.0f, 1.0f, 0.0f));
+
+    box = new Cube(false, boxSize * 2);
+
+    GLShader boxVertexShader(GLShader::GLShaderType::VERTEX);
+    boxVertexShader.readShader("box.vert");
+    boxVertexShader.compileShader();
+
+    GLShader boxFragmentShader(GLShader::GLShaderType::FRAGMENT);
+    boxFragmentShader.readShader("box.frag");
+    boxFragmentShader.compileShader();
+
+    boxProgram.setShaders({ boxVertexShader.getId(), boxFragmentShader.getId() });
+    boxProgram.link();
+
+    boxProgram.use();
+    GLint w, h;
+    glActiveTexture(GL_TEXTURE0);
+    boxTextureBind = textureReader.loadTex("box.tga", w, h);
+    setLights2();
+
+    boxCenter = vec3(30.0f, 0.0f, 0.0f);
+    movedBox = mat4(1.0f);
+    movedBox = glm::translate(boxCenter);
 }
 
 void setMatrices()
@@ -237,9 +273,117 @@ void setMatrices()
 }
 
 void moveCamera();
+void moveBox();
 
-vec3 xPlaneVec(ter, 0.0f, 0.0f);
 vec3 sphereCenter(0.0f, 0.0f, 0.0f);
+void envReflect()
+{
+    if (sphereCenter.x > ter - 5.0f)
+    {
+        sphere->dir = glm::reflect(sphere->dir, normals[3]);
+    }
+
+    if (sphereCenter.x <  -ter + 5.0f)
+    {
+        sphere->dir = glm::reflect(sphere->dir, normals[1]);
+    }
+
+    if (sphereCenter.z > ter - 5.0f)
+    {
+        sphere->dir = glm::reflect(sphere->dir, normals[0]);
+    }
+
+    if (sphereCenter.z <  -ter + 5.0f)
+    {
+        sphere->dir = glm::reflect(sphere->dir, normals[2]);
+    }
+
+    if (sphereCenter.y > ter - 5.0f)
+    {
+        sphere->dir = glm::reflect(sphere->dir, normals[5]);
+    }
+
+    if (sphereCenter.y <  -ter + 5.0f)
+    {
+        sphere->dir = glm::reflect(sphere->dir, normals[4]);
+    }
+
+}
+
+GLfloat dist(GLfloat x, GLfloat y)
+{
+    return glm::abs(x - y);
+}
+
+void boxReflect()
+{
+    if (sphereCenter.x - 5.0f <= boxCenter.x + boxSize
+            && sphereCenter.x > boxCenter.x - boxSize
+            && sphereCenter.y < boxCenter.y + boxSize
+            && sphereCenter.y > boxCenter.y - boxSize
+            && sphereCenter.z < boxCenter.z + boxSize
+            && sphereCenter.z > boxCenter.z - boxSize)
+    {
+        sphere->dir = glm::reflect(sphere->dir, vec3(1.0f, 0.0f, 0.0f));
+        std::cout << "+x" <<  std::endl;
+    }
+
+    if (sphereCenter.x + 5.0f >= boxCenter.x - boxSize
+            && sphereCenter.x < boxCenter.x + boxSize
+            && sphereCenter.y < boxCenter.y + boxSize
+            && sphereCenter.y > boxCenter.y - boxSize
+            && sphereCenter.z < boxCenter.z + boxSize
+            && sphereCenter.z > boxCenter.z - boxSize)
+    {
+        sphere->dir = glm::reflect(sphere->dir, vec3(-1.0f, 0.0f, 0.0f));
+        std::cout << "-x sphCent(" << sphereCenter.x << ", " << sphereCenter.y << ", " << sphereCenter.z<< ")"<<std::endl;
+    }
+
+    if (sphereCenter.y - 5.0f <= boxCenter.y + boxSize
+            && sphereCenter.x > boxCenter.x - boxSize
+            && sphereCenter.x < boxCenter.x + boxSize
+            && sphereCenter.y > boxCenter.y - boxSize
+            && sphereCenter.z < boxCenter.z + boxSize
+            && sphereCenter.z > boxCenter.z - boxSize)
+    {
+        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, 1.0f, 0.0f));
+        std::cout << "+y" << std::endl;
+    }
+
+    if (sphereCenter.y + 5.0f >= boxCenter.y - boxSize
+            && sphereCenter.x < boxCenter.x + boxSize
+            && sphereCenter.x > boxCenter.x - boxSize
+            && sphereCenter.y < boxCenter.y + boxSize
+            && sphereCenter.z < boxCenter.z + boxSize
+            && sphereCenter.z > boxCenter.z - boxSize)
+    {
+        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, -1.0f, 0.0f));
+        std::cout << "-y" << std::endl;
+    }
+    if (sphereCenter.z - 5.0f <= boxCenter.z + boxSize
+            && sphereCenter.x < boxCenter.x + boxSize
+            && sphereCenter.x > boxCenter.x - boxSize
+            && sphereCenter.y < boxCenter.y + boxSize
+            && sphereCenter.y > boxCenter.y - boxSize
+            && sphereCenter.z > boxCenter.z - boxSize)
+    {
+        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, 0.0f, 1.0f));
+        std::cout << "+z" << std::endl;
+
+    }
+
+    if (sphereCenter.z + 5.0f >= boxCenter.z - boxSize
+            && sphereCenter.x < boxCenter.x + boxSize
+            && sphereCenter.x > boxCenter.x - boxSize
+            && sphereCenter.y < boxCenter.y + boxSize
+            && sphereCenter.y > boxCenter.y - boxSize
+            && sphereCenter.z < boxCenter.z + boxSize)
+    {
+        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, 0.0f, -1.0f));
+        std::cout << "-z" << std::endl;
+    }
+}
+
 
 void mainLoop()
 {
@@ -248,43 +392,25 @@ void mainLoop()
         glClear(GL_DEPTH_BUFFER_BIT);
 
         moveCamera();
+        moveBox();
 
         envProgram.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, envTextureBind);
         setMatrices();
         enviroment->render();
 
 
         sphereProgram.use();
 
-        if (sphereCenter.x > ter - 5.0f)
-        {
-            sphere->dir = glm::reflect(sphere->dir, normals[3]);
-        }
+        envReflect();
+        boxReflect();
 
-        if (sphereCenter.x <  -ter + 5.0f)
-        {
-            sphere->dir = glm::reflect(sphere->dir, normals[1]);
-        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, sphereTextureColorBind);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, sphereTextureTransBind);
 
-        if (sphereCenter.z > ter - 5.0f)
-        {
-            sphere->dir = glm::reflect(sphere->dir, normals[0]);
-        }
-
-        if (sphereCenter.z <  -ter + 5.0f)
-        {
-            sphere->dir = glm::reflect(sphere->dir, normals[2]);
-        }
-
-        if (sphereCenter.y > ter - 5.0f)
-        {
-            sphere->dir = glm::reflect(sphere->dir, normals[5]);
-        }
-
-        if (sphereCenter.y <  -ter + 5.0f)
-        {
-            sphere->dir = glm::reflect(sphere->dir, normals[4]);
-        }
 
         vec3 d = sphere->dir * 0.1f;
         sphereCenter += d;
@@ -297,6 +423,18 @@ void mainLoop()
         sphereProgram.setUniform("MVP", projection * mv);
         sphere->render();
 
+        boxProgram.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, boxTextureBind);
+
+        mv = camera.getView() * movedBox;
+        envProgram.setUniform("ModelViewMatrix", mv);
+        envProgram.setUniform("NormalMatrix",
+                              glm::mat3(glm::vec3(mv[0]), glm::vec3(mv[1]), glm::vec3(mv[2])));
+        mat4 mvp = projection * mv;
+        envProgram.setUniform("MVP", mvp);
+
+        box->render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -336,7 +474,7 @@ void moveCamera()
     }
     if (keyStates[GLFW_KEY_LEFT_SHIFT])
     {
-        camera.setSprint(2.0);
+        camera.setSprint(5.0);
     }
     if (!keyStates[GLFW_KEY_LEFT_SHIFT])
     {
@@ -344,15 +482,72 @@ void moveCamera()
     }
 }
 
+void moveBox()
+{
+    if (keyStates[GLFW_KEY_I])
+    {
+        if (boxCenter.z + boxSize < ter)
+        {
+            boxCenter.z += 0.1;
+            movedBox = glm::translate(boxCenter);
+        }
+    }
+
+    if (keyStates[GLFW_KEY_K])
+    {
+        if (boxCenter.z - boxSize > -ter)
+        {
+            boxCenter.z -= 0.1;
+            movedBox = glm::translate(boxCenter);
+        }
+    }
+
+    if (keyStates[GLFW_KEY_J])
+    {
+        if (boxCenter.x + boxSize < ter)
+        {
+            boxCenter.x += 0.1;
+            movedBox = glm::translate(boxCenter);
+        }
+    }
+
+    if (keyStates[GLFW_KEY_L])
+    {
+        if (boxCenter.x - boxSize > -ter)
+        {
+            boxCenter.x -= 0.1;
+            movedBox = glm::translate(boxCenter);
+        }
+    }
+
+    if (keyStates[GLFW_KEY_U])
+    {
+        if (boxCenter.y + boxSize < ter)
+        {
+            boxCenter.y += 0.1;
+            movedBox = glm::translate(boxCenter);
+        }
+    }
+
+    if (keyStates[GLFW_KEY_H])
+    {
+        if (boxCenter.y - boxSize > -ter)
+        {
+            boxCenter.y -= 0.1;
+            movedBox = glm::translate(boxCenter);
+        }
+    }
+}
+
 void keyFunction(GLFWwindow *window, int key, int scanCode, int action, int mods)
 {
     if (action == GLFW_PRESS)
     {
-        keyStates[key] = 1;
+        keyStates[key] = true;
     }
     else if (action == GLFW_RELEASE)
     {
-        keyStates[key] = 0;
+        keyStates[key] = false;
     }
 
     switch (key)
@@ -396,7 +591,7 @@ void mouse_callback(GLFWwindow * window, double xpos, double ypos)
 
 int main()
 {
-    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT, true);
+    window = initWindow("Beadando", WIN_WIDTH, WIN_HEIGHT, false);
 
     init();
 
