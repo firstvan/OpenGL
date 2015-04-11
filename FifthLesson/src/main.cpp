@@ -208,7 +208,7 @@ int main()
 {
     srand(time(NULL));
 
-    window = initWindow("Fifth Lesson", 1280, 720);
+    window = initWindow("Fifth Lesson", 1280, 720, true);
 
     glfwSetKeyCallback(window, keyFunction);
 

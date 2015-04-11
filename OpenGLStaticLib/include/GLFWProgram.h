@@ -24,6 +24,7 @@ GLFWwindow* initWindow(std::string s,int width,int height, bool fullScreen)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
+
     glewExperimental = GL_TRUE;
     glewInit();
 

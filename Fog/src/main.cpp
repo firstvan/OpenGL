@@ -31,7 +31,7 @@ void init()
     glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
-    cube = new Cube(false);
+    cube = new Cube(false, 1);
 
     GLShader vert(GLShader::GLShaderType::VERTEX);
     vert.readShader("fog.vert");
@@ -133,7 +133,7 @@ void key_callback(GLFWwindow * window, int key, int scancode, int action, int mo
 int main()
 {
 
-    window = initWindow("Fog", WIN_WIDTH, WIN_HEIGHT);
+    window = initWindow("Fog", WIN_WIDTH, WIN_HEIGHT, true);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     init();
