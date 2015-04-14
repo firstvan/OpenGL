@@ -56,8 +56,9 @@ std::vector<vec3> normals;
 
 mat4 movedBox = mat4(1.0f);
 vec3 boxCenter;
-float boxSize = 7.0f;
-float sS = 5.0f;
+std::vector<vec3> boxSides;
+float boxSize = 15.0f;
+float sS = 1.0f;
 
 GLuint loadEnviromentTexture()
 {
@@ -152,7 +153,7 @@ void init()
     envTextureBind = loadEnviromentTexture();
 
     sphere = new Sphere(sS, 180, 180);
-    sphere->dir = vec3(1.0f, 0.0f, 0.0f);
+    sphere->dir = vec3(1.0f, 1.0f, 0.5f);
 
     model = mat4(1.0f);
     view = glm::lookAt(camPos, sphereCenter, camUp);
@@ -166,6 +167,8 @@ void init()
     normals.push_back(vec3(-1.0f, 0.0f, 0.0f));
     normals.push_back(vec3(0.0f, -1.0f, 0.0f));
     normals.push_back(vec3(0.0f, 1.0f, 0.0f));
+
+
 
     box = new Cube(false, boxSize * 2);
 
@@ -226,7 +229,7 @@ void mainLoop()
         glBindTexture(GL_TEXTURE_2D, sphereTextureTransBind);
 
 
-        vec3 d = sphere->dir * 0.3f;
+        vec3 d = sphere->dir * 1.0f;
         sphereCenter += d;
         model *= glm::translate(d);
         prog.setUniform("Model", model);
@@ -262,7 +265,7 @@ void moveBox()
     {
         if (boxCenter.z + boxSize < ter)
         {
-            boxCenter.z += 0.1;
+            boxCenter.z += 0.5;
             movedBox = glm::translate(boxCenter);
         }
     }
@@ -271,7 +274,7 @@ void moveBox()
     {
         if (boxCenter.z - boxSize > -ter)
         {
-            boxCenter.z -= 0.1;
+            boxCenter.z -= 0.5;
             movedBox = glm::translate(boxCenter);
         }
     }
@@ -280,7 +283,7 @@ void moveBox()
     {
         if (boxCenter.x + boxSize < ter)
         {
-            boxCenter.x += 0.1;
+            boxCenter.x += 0.5;
             movedBox = glm::translate(boxCenter);
         }
     }
@@ -289,7 +292,7 @@ void moveBox()
     {
         if (boxCenter.x - boxSize > -ter)
         {
-            boxCenter.x -= 0.1;
+            boxCenter.x -= 0.5;
             movedBox = glm::translate(boxCenter);
         }
     }
@@ -298,7 +301,7 @@ void moveBox()
     {
         if (boxCenter.y + boxSize < ter)
         {
-            boxCenter.y += 0.1;
+            boxCenter.y += 0.5;
             movedBox = glm::translate(boxCenter);
         }
     }
@@ -307,7 +310,7 @@ void moveBox()
     {
         if (boxCenter.y - boxSize > -ter)
         {
-            boxCenter.y -= 0.1;
+            boxCenter.y -= 0.5;
             movedBox = glm::translate(boxCenter);
         }
     }
@@ -377,67 +380,83 @@ void envReflect()
 
 }
 
-GLfloat dist(GLfloat x, GLfloat y)
+
+GLfloat distPlanPoint(vec3 point, vec3 planePoint, vec3 normal)
 {
-    return glm::abs(x - y);
+    GLfloat D = planePoint.x * normal.x + planePoint.y * normal.y + planePoint.z * normal.z;
+    return (normal.x * point.x + normal.y * point.y + normal.z * point.z - D);
 }
 
 void boxReflect()
 {
-    if (sphereCenter.x - sS <= boxCenter.x + boxSize
-            && sphereCenter.x + sS >= boxCenter.x - boxSize
-            && sphereCenter.y - sS <= boxCenter.y + boxSize
-            && sphereCenter.y + sS >= boxCenter.y - boxSize
-            && sphereCenter.z - sS <= boxCenter.z + boxSize
-            && sphereCenter.z + sS >= boxCenter.z - boxSize)
-    {
+    vec3 posx = vec3(boxCenter.x + boxSize, boxCenter.y, boxCenter.z);
+    vec3 posxn = vec3(1.0f, 0.0f, 0.0f);
+    vec3 negx = vec3(boxCenter.x - boxSize, boxCenter.y, boxCenter.z);
+    vec3 negxn = vec3(-1.0f, 0.0f, 0.0f);
 
-        sphere->dir = glm::reflect(sphere->dir, vec3(1.0f, 0.0f, 0.0f));
-    }
-    else if (sphereCenter.x + sS >= boxCenter.x - boxSize
-             && sphereCenter.x - sS <= boxCenter.x + boxSize
-             && sphereCenter.y - sS <= boxCenter.y + boxSize
-             && sphereCenter.y + sS >= boxCenter.y - boxSize
-             && sphereCenter.z <= boxCenter.z + boxSize
-             && sphereCenter.z + sS >= boxCenter.z - boxSize)
+    vec3 posy = vec3(boxCenter.x, boxCenter.y + boxSize, boxCenter.z);
+    vec3 posyn = vec3(0.0f, 1.0f, 0.0f);
+    vec3 negy = vec3(boxCenter.x, boxCenter.y - boxSize, boxCenter.z);
+    vec3 negyn = vec3(0.0f, -1.0f, 0.0f);
+
+
+    vec3 posz = vec3(boxCenter.x, boxCenter.y, boxCenter.z + boxSize);
+    vec3 poszn = vec3(0.0f, 0.0f, 1.0f);
+    vec3 negz = vec3(boxCenter.x, boxCenter.y, boxCenter.z - boxSize);
+    vec3 negzn = vec3(0.0f, 0.0f, -1.0f);
+
+    if (glm::abs(distPlanPoint(sphereCenter, posx, posxn)) <= sS &&
+            distPlanPoint(boxCenter, posx, posxn) * distPlanPoint(sphereCenter, posx, posxn) < 0 &&
+            posy.y >= sphereCenter.y && negy.y < sphereCenter.y &&
+            posz.z >= sphereCenter.z && negz.z < sphereCenter.z
+       )
     {
-        sphere->dir = glm::reflect(sphere->dir, vec3(-1.0f, 0.0f, 0.0f));
+        sphere->dir = glm::reflect(sphere->dir, posxn);
     }
-    else if (sphereCenter.y - sS <= boxCenter.y + boxSize
-             && sphereCenter.x + sS >= boxCenter.x - boxSize
-             && sphereCenter.x - sS <= boxCenter.x + boxSize
-             && sphereCenter.y + sS >= boxCenter.y - boxSize
-             && sphereCenter.z - sS <= boxCenter.z + boxSize
-             && sphereCenter.z + sS >= boxCenter.z - boxSize)
+
+    if (glm::abs(distPlanPoint(sphereCenter, negx, negxn)) <= sS &&
+            distPlanPoint(boxCenter, negx, negxn) * distPlanPoint(sphereCenter, negx, negxn) < 0 &&
+            posy.y >= sphereCenter.y && negy.y < sphereCenter.y &&
+            posz.z >= sphereCenter.z && negz.z < sphereCenter.z
+       )
     {
-        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, 1.0f, 0.0f));
+        sphere->dir = glm::reflect(sphere->dir, negxn);
     }
-    else if (sphereCenter.y + sS >= boxCenter.y - boxSize
-             && sphereCenter.x - sS <= boxCenter.x + boxSize
-             && sphereCenter.x + sS >= boxCenter.x - boxSize
-             && sphereCenter.y - sS <= boxCenter.y + boxSize
-             && sphereCenter.z - sS <= boxCenter.z + boxSize
-             && sphereCenter.z + sS >= boxCenter.z - boxSize)
+
+    if (glm::abs(distPlanPoint(sphereCenter, posy, posyn)) <= sS &&
+            distPlanPoint(boxCenter, posy, posyn) * distPlanPoint(sphereCenter, posy, posyn) < 0 &&
+            posx.x >= sphereCenter.x && negx.x < sphereCenter.x &&
+            posz.z >= sphereCenter.z && negz.z < sphereCenter.z
+       )
     {
-        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, -1.0f, 0.0f));
+        sphere->dir = glm::reflect(sphere->dir, posyn);
     }
-    else if (sphereCenter.z - sS <= boxCenter.z + boxSize
-             && sphereCenter.x - sS <= boxCenter.x + boxSize
-             && sphereCenter.x + sS >= boxCenter.x - boxSize
-             && sphereCenter.y - sS <= boxCenter.y + boxSize
-             && sphereCenter.y + sS >= boxCenter.y - boxSize
-             && sphereCenter.z + sS >= boxCenter.z - boxSize)
+
+    if (glm::abs(distPlanPoint(sphereCenter, negy, negyn)) <= sS &&
+            distPlanPoint(boxCenter, negy, negyn) * distPlanPoint(sphereCenter, negy, negyn) < 0 &&
+            posx.x >= sphereCenter.x && negx.x < sphereCenter.x &&
+            posz.z >= sphereCenter.z && negz.z < sphereCenter.z
+       )
     {
-        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, 0.0f, 1.0f));
+        sphere->dir = glm::reflect(sphere->dir, negyn);
     }
-    else if (sphereCenter.z + sS >= boxCenter.z - boxSize
-             && sphereCenter.x - sS <= boxCenter.x + boxSize
-             && sphereCenter.x + sS >= boxCenter.x - boxSize
-             && sphereCenter.y - sS <= boxCenter.y + boxSize
-             && sphereCenter.y + sS >= boxCenter.y - boxSize
-             && sphereCenter.z - sS <= boxCenter.z + boxSize)
+
+    if (glm::abs(distPlanPoint(sphereCenter, posz, poszn)) <= sS &&
+            distPlanPoint(boxCenter, posz, poszn) * distPlanPoint(sphereCenter, posz, poszn) < 0 &&
+            posy.y >= sphereCenter.y && negy.y < sphereCenter.y &&
+            posx.x >= sphereCenter.x && negx.x < sphereCenter.x
+       )
     {
-        sphere->dir = glm::reflect(sphere->dir, vec3(0.0f, 0.0f, -1.0f));
+        sphere->dir = glm::reflect(sphere->dir, poszn);
+    }
+
+    if (glm::abs(distPlanPoint(sphereCenter, negz, negzn)) <= sS &&
+            distPlanPoint(boxCenter, negz, negzn) * distPlanPoint(sphereCenter, negz, negzn) < 0 &&
+            posy.y >= sphereCenter.y && negy.y < sphereCenter.y &&
+            posx.x >= sphereCenter.x && negx.x < sphereCenter.x
+       )
+    {
+        sphere->dir = glm::reflect(sphere->dir, negzn);
     }
 
 }
